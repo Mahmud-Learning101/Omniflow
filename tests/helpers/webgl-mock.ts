@@ -1,0 +1,105 @@
+import type { Page } from '@playwright/test';
+
+/**
+ * Injects a headless WebGL and WebGL2 context mock into the page.
+ * Prevents 3D canvas and shader initialization crashes in headless CI/CD environments.
+ */
+export async function injectWebGLMock(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+
+    function createMockWebGLContext(canvas: HTMLCanvasElement): Record<string, unknown> {
+      const glState: Record<string, unknown> = {
+        canvas,
+        drawingBufferWidth: canvas.width || 800,
+        drawingBufferHeight: canvas.height || 600,
+        VERTEX_SHADER: 35633,
+        FRAGMENT_SHADER: 35632,
+        COMPILE_STATUS: 35713,
+        LINK_STATUS: 35714,
+        COLOR_BUFFER_BIT: 16384,
+        DEPTH_BUFFER_BIT: 256,
+        STENCIL_BUFFER_BIT: 1024,
+        ARRAY_BUFFER: 34962,
+        ELEMENT_ARRAY_BUFFER: 34963,
+        STATIC_DRAW: 35044,
+        DYNAMIC_DRAW: 35048,
+        FLOAT: 5126,
+        TRIANGLES: 4,
+        RGBA: 6408,
+        UNSIGNED_BYTE: 5121,
+        TEXTURE_2D: 3553,
+      };
+
+      const handler: ProxyHandler<Record<string, unknown>> = {
+        get(target: Record<string, unknown>, prop: string | symbol) {
+          if (typeof prop === 'string' && prop in target) {
+            return target[prop];
+          }
+
+          if (prop === 'getExtension') {
+            return (name: string) => {
+              if (name === 'WEBGL_lose_context') {
+                return { loseContext: () => {}, restoreContext: () => {} };
+              }
+              return {};
+            };
+          }
+
+          if (prop === 'getParameter') {
+            return (param: number) => {
+              if (param === 3379) return 4096; // MAX_TEXTURE_SIZE
+              if (param === 34076) return 4096; // MAX_CUBE_MAP_TEXTURE_SIZE
+              if (param === 34921) return 16; // MAX_VERTEX_ATTRIBS
+              if (param === 35661) return 32; // MAX_COMBINED_TEXTURE_IMAGE_UNITS
+              if (param === 7938) return 'WebGL 1.0 (Mock Context)';
+              if (param === 35724) return 'WebGL GLSL ES 1.0 (Mock GLSL)';
+              return 1;
+            };
+          }
+
+          if (prop === 'getShaderParameter' || prop === 'getProgramParameter') {
+            return () => true;
+          }
+
+          if (prop === 'getShaderInfoLog' || prop === 'getProgramInfoLog') {
+            return () => '';
+          }
+
+          if (prop === 'getUniformLocation' || prop === 'getAttribLocation') {
+            return (_prog: unknown, name: string) => ({ name });
+          }
+
+          if (
+            prop === 'createShader' ||
+            prop === 'createProgram' ||
+            prop === 'createBuffer' ||
+            prop === 'createTexture' ||
+            prop === 'createFramebuffer'
+          ) {
+            return () => ({ id: Math.random() });
+          }
+
+          return () => {};
+        },
+      };
+
+      return new Proxy(glState, handler);
+    }
+
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      contextType: string,
+      options?: unknown
+    ): unknown {
+      if (
+        contextType === 'webgl' ||
+        contextType === 'experimental-webgl' ||
+        contextType === 'webgl2'
+      ) {
+        return createMockWebGLContext(this);
+      }
+      return originalGetContext.call(this, contextType, options);
+    } as typeof HTMLCanvasElement.prototype.getContext;
+  });
+}
