@@ -28,7 +28,7 @@ test.describe("Phase 4: System Chrome & Shared Interactive Props", () => {
     const monogramEl = page.getByText(chrome.monogram);
     await expect(monogramEl).toBeVisible();
 
-    const monogramSubEl = page.getByText(chrome.monogramSub);
+    const monogramSubEl = page.getByRole('link', { name: 'OmniFlow' }).getByText(chrome.monogramSub);
     await expect(monogramSubEl).toBeVisible();
 
     // 2. Verify Live Latency Indicator
