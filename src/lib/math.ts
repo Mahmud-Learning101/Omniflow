@@ -1,107 +1,136 @@
-/**
- * OmniFlow Hardware Math Engine
- * Spherical coordinate transforms and high-performance F1 braking bezier easing.
- */
-
-export interface Vector3D {
-  x: number;
-  y: number;
-  z: number;
-}
+export type Vec3 = [number, number, number];
 
 export interface GeoCoordinate {
-  latitude: number;
-  longitude: number;
-}
-
-export function degToRad(degrees: number): number {
-  return (degrees * Math.PI) / 180;
-}
-
-export function radToDeg(radians: number): number {
-  return (radians * 180) / Math.PI;
-}
-
-export function clamp(val: number, min: number, max: number): number {
-  return Math.min(Math.max(val, min), max);
-}
-
-export function lerp(start: number, end: number, factor: number): number {
-  return start + (end - start) * factor;
+  lat: number;
+  lng: number;
 }
 
 /**
- * Converts Latitude/Longitude on sphere radius R to 3D Cartesian coordinates.
- * Y-axis aligned (standard Three.js right-handed coordinate system).
+ * Converts geographical latitude and longitude (in degrees) to 3D Cartesian coordinates on radius R.
  */
-export function latLongToCartesian(lat: number, lon: number, radius = 1): [number, number, number] {
-  const phi = degToRad(clamp(lat, -90, 90));
-  const theta = degToRad(lon);
+export function latLongToCartesian(lat: number, lng: number, radius = 1): Vec3 {
+  const phi = ((90 - lat) * Math.PI) / 180;
+  const theta = ((lng + 180) * Math.PI) / 180;
 
-  const cosPhi = Math.cos(phi);
-  const x = radius * cosPhi * Math.sin(theta);
-  const y = radius * Math.sin(phi);
-  const z = radius * cosPhi * Math.cos(theta);
+  const x = -(radius * Math.sin(phi) * Math.cos(theta));
+  const z = radius * Math.sin(phi) * Math.sin(theta);
+  const y = radius * Math.cos(phi);
 
   return [x, y, z];
 }
 
-export function latLongToVector3(lat: number, lon: number, radius = 1): Vector3D {
-  const [x, y, z] = latLongToCartesian(lat, lon, radius);
-  return { x, y, z };
-}
+export const latLngToVector3 = latLongToCartesian;
 
 /**
- * Inverse conversion from 3D Cartesian coordinates to Latitude/Longitude.
+ * Inverts 3D Cartesian coordinates back to geographical latitude and longitude.
  */
-export function cartesianToLatLong(x: number, y: number, z: number): GeoCoordinate {
-  const radius = Math.sqrt(x * x + y * y + z * z);
-  if (radius === 0) return { latitude: 0, longitude: 0 };
+export function vector3ToLatLng(v: Vec3): GeoCoordinate {
+  const [x, y, z] = v;
+  const radius = Math.hypot(x, y, z);
+  if (radius === 0) return { lat: 0, lng: 0 };
 
-  const latitude = radToDeg(Math.asin(clamp(y / radius, -1, 1)));
-  const longitude = radToDeg(Math.atan2(x, z));
+  const phi = Math.acos(Math.max(-1, Math.min(1, y / radius)));
+  const theta = Math.atan2(z, -x);
 
-  return { latitude, longitude };
+  const lat = 90 - (phi * 180) / Math.PI;
+  let lng = (theta * 180) / Math.PI - 180;
+
+  while (lng < -180) lng += 360;
+  while (lng > 180) lng -= 360;
+
+  return { lat, lng };
 }
 
 /**
  * Analytical F1 Braking Cubic Bezier Easing: cubic-bezier(0.16, 1, 0.3, 1)
  * High initial entry velocity with rapid apex deceleration and smooth settling.
  */
-function sampleCubicBezier(p1: number, p2: number, t: number): number {
+function sampleCubic(p1: number, p2: number, t: number): number {
   return 3 * (1 - t) * (1 - t) * t * p1 + 3 * (1 - t) * t * t * p2 + t * t * t;
 }
 
-function sampleCubicDerivative(p1: number, p2: number, t: number): number {
+function sampleDerivative(p1: number, p2: number, t: number): number {
   return 3 * (1 - t) * (1 - t) * p1 + 6 * (1 - t) * t * (p2 - p1) + 3 * t * t * (1 - p2);
 }
 
 export function f1Brake(progress: number): number {
-  const x = clamp(progress, 0, 1);
+  const x = Math.max(0, Math.min(1, progress));
   if (x === 0 || x === 1) return x;
 
-  const x1 = 0.16;
-  const x2 = 0.3;
-  const y1 = 1.0;
-  const y2 = 1.0;
-
-  // Newton-Raphson iteration to find t for given x
   let t = x;
   for (let i = 0; i < 6; i++) {
-    const currentX = sampleCubicBezier(x1, x2, t) - x;
+    const currentX = sampleCubic(0.16, 0.3, t) - x;
     if (Math.abs(currentX) < 1e-5) break;
-    const dX = sampleCubicDerivative(x1, x2, t);
+    const dX = sampleDerivative(0.16, 0.3, t);
     if (Math.abs(dX) < 1e-5) break;
-    t -= currentX / dX;
-    t = clamp(t, 0, 1);
+    t = Math.max(0, Math.min(1, t - currentX / dX));
   }
+  return sampleCubic(1.0, 1.0, t);
+}
 
-  return sampleCubicBezier(y1, y2, t);
+export function f1Lerp(start: number, end: number, progress: number): number {
+  return start + (end - start) * f1Brake(progress);
 }
 
 /**
- * Interpolate values using F1 braking deceleration curve
+ * Spherical linear interpolation (Slerp) between two vectors on a sphere.
  */
-export function f1Lerp(start: number, end: number, progress: number): number {
-  return lerp(start, end, f1Brake(progress));
+export function slerpOnSphere(v1: Vec3, v2: Vec3, t: number, targetRadius: number): Vec3 {
+  const clampedT = Math.max(0, Math.min(1, t));
+  const len1 = Math.hypot(...v1) || 1;
+  const len2 = Math.hypot(...v2) || 1;
+  const u1: Vec3 = [v1[0] / len1, v1[1] / len1, v1[2] / len1];
+  const u2: Vec3 = [v2[0] / len2, v2[1] / len2, v2[2] / len2];
+
+  let dot = Math.max(-1, Math.min(1, u1[0] * u2[0] + u1[1] * u2[1] + u1[2] * u2[2]));
+  if (dot > 0.9995) {
+    const rx = u1[0] + clampedT * (u2[0] - u1[0]);
+    const ry = u1[1] + clampedT * (u2[1] - u1[1]);
+    const rz = u1[2] + clampedT * (u2[2] - u1[2]);
+    const rlen = Math.hypot(rx, ry, rz) || 1;
+    return [(rx / rlen) * targetRadius, (ry / rlen) * targetRadius, (rz / rlen) * targetRadius];
+  }
+
+  const theta = Math.acos(dot);
+  const sinTheta = Math.sin(theta);
+  const s1 = Math.sin((1 - clampedT) * theta) / sinTheta;
+  const s2 = Math.sin(clampedT * theta) / sinTheta;
+  const rx = s1 * u1[0] + s2 * u2[0];
+  const ry = s1 * u1[1] + s2 * u2[1];
+  const rz = s1 * u1[2] + s2 * u2[2];
+  const rlen = Math.hypot(rx, ry, rz) || 1;
+  return [(rx / rlen) * targetRadius, (ry / rlen) * targetRadius, (rz / rlen) * targetRadius];
 }
+
+/**
+ * Great-circle distance between two geo-coordinates in km.
+ */
+export function greatCircleDistance(lat1: number, lng1: number, lat2: number, lng2: number, radiusKm = 6371): number {
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return radiusKm * c;
+}
+
+/**
+ * Procedural low-poly elevation displacement combining harmonic trigonometric octaves.
+ */
+export function calculateElevationDisplacement(
+  x: number,
+  y: number,
+  z: number,
+  baseRadius: number
+): number {
+  const f1 = 1.8;
+  const f2 = 3.6;
+  const f3 = 7.2;
+  const octave1 = Math.sin(x * f1) * Math.cos(y * f1);
+  const octave2 = Math.sin(y * f2) * Math.cos(z * f2) * 0.5;
+  const octave3 = Math.sin(z * f3) * Math.cos(x * f3) * 0.25;
+  const totalNoise = (octave1 + octave2 + octave3) / 1.75;
+  return baseRadius * (1 + totalNoise * 0.08);
+}
+

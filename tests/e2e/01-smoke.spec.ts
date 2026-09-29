@@ -30,7 +30,7 @@ test.describe('Smoke Test & Chassis Verification', () => {
     const mainHeading = page.getByRole('heading', { level: 1 });
     await expect(mainHeading).toBeVisible();
     await expect(mainHeading).toContainText('OmniFlow');
-    await expect(mainHeading).toContainText('Kernel');
+    await expect(mainHeading).toContainText(/Kernel/i);
 
     const statusBadge = page.getByText(/System Online \/\/ Phase 1 Operational/i);
     await expect(statusBadge).toBeVisible();

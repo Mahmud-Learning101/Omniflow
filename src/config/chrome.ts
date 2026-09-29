@@ -1,0 +1,40 @@
+import { ChromeConfig, ChromeConfigSchema } from "@/types/chrome";
+
+export const chromeConfig: ChromeConfig = ChromeConfigSchema.parse({
+  monogram: "OF // 01",
+  monogramSub: "KERNEL",
+  latencyUnit: "ms",
+  latencyTarget: 14,
+  soundOnLabel: "AUDIO // ON",
+  soundOffLabel: "AUDIO // MUTED",
+  soundAriaLabel: "Toggle telemetry audio synthesizer",
+  soundShortcutHint: "[M]",
+  consoleTriggerLabel: "LAUNCH CONSOLE",
+  consoleAriaLabel: "Open autonomous operations console",
+  consoleShortcutHint: "[SYS]",
+  statusActiveLabel: "ONLINE",
+  consoleNotice: "TELEMETRY CONSOLE ACTIVE // NODE SYNCHRONIZED",
+  colors: {
+    obsidian: "#08090D",
+    obsidianSurface: "#12131A",
+    obsidianCard: "rgba(18, 19, 26, 0.75)",
+    racingLime: "#d2ff00",
+    beaconCyan: "#00f0ff",
+    flameOrange: "#ff4d00",
+    border: "rgba(255, 255, 255, 0.08)",
+    borderHover: "rgba(210, 255, 0, 0.4)",
+    subtleText: "#a3a3a3",
+  },
+  crt: {
+    scanlineOpacity: 0.15,
+    vignetteOpacity: 0.35,
+    noiseOpacity: 0.04,
+  },
+  cursor: {
+    innerSize: 6,
+    outerSize: 34,
+    expandedSize: 48,
+    springStiffness: 0.18,
+    springDamping: 0.82,
+  },
+});

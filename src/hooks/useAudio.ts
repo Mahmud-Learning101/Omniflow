@@ -7,6 +7,8 @@ export interface UseAudioReturn {
   isMuted: boolean;
   playTick: () => void;
   playSnap: () => void;
+  playClick: () => void;
+  playToggle: () => void;
   playHum: (velocity?: number) => void;
   toggleMute: () => void;
   setMuted: (muted: boolean) => void;
@@ -45,6 +47,8 @@ export function useAudio(): UseAudioReturn {
     isMuted,
     playTick,
     playSnap,
+    playClick: playTick,
+    playToggle: playSnap,
     playHum,
     toggleMute,
     setMuted,

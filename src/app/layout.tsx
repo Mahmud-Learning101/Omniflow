@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import {
+  NavigationDock,
+  MagneticCursor,
+  CRTOverlay,
+  SoundController,
+} from "@/components/common";
 
 const sansFont = Inter({
   variable: "--font-sans",
@@ -27,6 +33,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${sansFont.variable} ${monoFont.variable}`}>
       <body className="bg-obsidian text-neutral-100 antialiased min-h-screen selection:bg-racing-lime selection:text-obsidian">
+        <NavigationDock />
+        <MagneticCursor />
+        <CRTOverlay />
+        <SoundController />
         {children}
       </body>
     </html>

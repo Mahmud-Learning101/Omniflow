@@ -1,144 +1,139 @@
-/**
- * OmniFlow Procedural Audio Synthesizer (100% Web Audio API)
- * Zero external audio downloads. Low latency real-time synthesis.
- */
+import { siteConfig } from "@/config/site";
 
-class ProceduralSynthesizer {
-  private ctx: AudioContext | null = null;
-  private muted = false;
-  private masterGain: GainNode | null = null;
+let audioCtx: AudioContext | null = null;
+let isAudioMuted = siteConfig.audio.muted;
 
-  private init(): AudioContext | null {
-    if (typeof window === "undefined") return null;
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.ctx = new AudioCtx();
-      this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.8, this.ctx.currentTime);
-      this.masterGain.connect(this.ctx.destination);
-    }
-    if (this.ctx.state === "suspended") {
-      this.ctx.resume().catch(() => {});
-    }
-    return this.ctx;
-  }
+function getAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const AudioCtx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return null;
 
-  public setMuted(muted: boolean): void {
-    this.muted = muted;
-    if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(muted ? 0 : 0.8, this.ctx.currentTime);
+  if (!audioCtx) {
+    try {
+      audioCtx = new AudioCtx();
+    } catch {
+      return null;
     }
   }
 
-  public isMuted(): boolean {
-    return this.muted;
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(() => {});
   }
+  return audioCtx;
+}
 
-  /**
-   * Micro-Tick: 1200Hz high-transient decay for button hover
-   */
-  public playMicroTick(): void {
-    if (this.muted) return;
-    const ctx = this.init();
-    if (!ctx || !this.masterGain) return;
+export function setMuted(muted: boolean): void {
+  isAudioMuted = muted;
+}
 
-    const t = ctx.currentTime;
+export function isMuted(): boolean {
+  return isAudioMuted;
+}
+
+/** Micro-Tick: 1200Hz high-frequency decay on cybernetic/beacon hover. */
+export function playMicroTick(): void {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-
     osc.type = "sine";
-    osc.frequency.setValueAtTime(1200, t);
-    osc.frequency.exponentialRampToValueAtTime(800, t + 0.015);
+    osc.frequency.setValueAtTime(siteConfig.audio.microTickFreq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.015);
 
-    gain.gain.setValueAtTime(0.12, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.015);
+    const baseVol = siteConfig.audio.masterVolume * 0.15;
+    gain.gain.setValueAtTime(baseVol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.02);
 
     osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(t);
-    osc.stop(t + 0.02);
-  }
-
-  /**
-   * Relay-Snap: 350Hz FM chirp for mechanical switches and toggles
-   */
-  public playRelaySnap(): void {
-    if (this.muted) return;
-    const ctx = this.init();
-    if (!ctx || !this.masterGain) return;
-
-    const t = ctx.currentTime;
-    const carrier = ctx.createOscillator();
-    const modulator = ctx.createOscillator();
-    const modGain = ctx.createGain();
-    const env = ctx.createGain();
-
-    // 350Hz Carrier with frequency modulation
-    carrier.type = "triangle";
-    carrier.frequency.setValueAtTime(350, t);
-
-    // Modulator creates mechanical FM click chirp
-    modulator.type = "sine";
-    modulator.frequency.setValueAtTime(700, t);
-    modulator.frequency.exponentialRampToValueAtTime(180, t + 0.035);
-
-    modGain.gain.setValueAtTime(250, t);
-    modGain.gain.exponentialRampToValueAtTime(1, t + 0.035);
-
-    modulator.connect(carrier.frequency);
-
-    // Transient envelope
-    env.gain.setValueAtTime(0.25, t);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-
-    carrier.connect(env);
-    env.connect(this.masterGain);
-
-    modulator.start(t);
-    carrier.start(t);
-    modulator.stop(t + 0.045);
-    carrier.stop(t + 0.045);
-  }
-
-  /**
-   * Warp-Hum: 60Hz resonant sub-bass on 3D rotation
-   */
-  public playWarpHum(velocity = 1): void {
-    if (this.muted) return;
-    const ctx = this.init();
-    if (!ctx || !this.masterGain) return;
-
-    const t = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-
-    const clampedVelocity = Math.max(0.1, Math.min(2.5, velocity));
-    const duration = 0.12 + clampedVelocity * 0.08;
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(60, t);
-    osc.frequency.linearRampToValueAtTime(60 + clampedVelocity * 8, t + duration * 0.5);
-    osc.frequency.linearRampToValueAtTime(58, t + duration);
-
-    // Resonant lowpass sub-bass filter
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(120, t);
-    filter.Q.setValueAtTime(8.5, t);
-
-    const targetGain = Math.min(0.4, 0.15 * clampedVelocity);
-    gain.gain.setValueAtTime(0.001, t);
-    gain.gain.linearRampToValueAtTime(targetGain, t + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(t);
-    osc.stop(t + duration + 0.01);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.02);
+  } catch {
+    // Graceful no-op in headless/test environments
   }
 }
 
-export const soundEngine = new ProceduralSynthesizer();
+/** Relay-Snap: 350Hz FM chirp on toggle and admin switches. */
+export function playRelaySnap(): void {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const carrier = ctx.createOscillator();
+    const modulator = ctx.createOscillator();
+    const modGain = ctx.createGain();
+    const gain = ctx.createGain();
+
+    carrier.type = "triangle";
+    carrier.frequency.setValueAtTime(siteConfig.audio.relaySnapFreq, ctx.currentTime);
+    modulator.type = "sine";
+    modulator.frequency.setValueAtTime(700, ctx.currentTime);
+    modulator.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.04);
+
+    modGain.gain.setValueAtTime(300, ctx.currentTime);
+    modGain.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 0.04);
+    modulator.connect(carrier.frequency);
+
+    const baseVol = siteConfig.audio.masterVolume * 0.25;
+    gain.gain.setValueAtTime(baseVol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.045);
+
+    carrier.connect(gain);
+    gain.connect(ctx.destination);
+    modulator.start();
+    carrier.start();
+    modulator.stop(ctx.currentTime + 0.045);
+    carrier.stop(ctx.currentTime + 0.045);
+  } catch {
+    // Graceful no-op
+  }
+}
+
+/** Warp-Hum: 60Hz resonant sub-bass on 3D rotation with velocity scaling. */
+export function playWarpHum(velocity = 1): void {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    const clampedVel = Math.max(0.2, Math.min(2.5, velocity));
+    const duration = 0.15 + clampedVel * 0.08;
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(siteConfig.audio.warpHumFreq, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(siteConfig.audio.warpHumFreq + clampedVel * 6, ctx.currentTime + duration * 0.5);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(120, ctx.currentTime);
+    filter.Q.setValueAtTime(8, ctx.currentTime);
+
+    const baseVol = siteConfig.audio.masterVolume * 0.1 * Math.min(1.5, clampedVel);
+    gain.gain.setValueAtTime(baseVol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration + 0.01);
+  } catch {
+    // Graceful no-op
+  }
+}
+
+export const soundEngine = {
+  playMicroTick,
+  playRelaySnap,
+  playWarpHum,
+  setMuted,
+  isMuted,
+};

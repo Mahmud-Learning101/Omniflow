@@ -37,6 +37,25 @@ export async function injectWebGLMock(page: Page): Promise<void> {
             return target[prop];
           }
 
+          if (prop === 'getContextAttributes') {
+            return () => ({
+              alpha: true,
+              depth: true,
+              stencil: true,
+              antialias: true,
+              premultipliedAlpha: true,
+              preserveDrawingBuffer: false,
+            });
+          }
+
+          if (prop === 'getSupportedExtensions') {
+            return () => ['ANGLE_instanced_arrays', 'OES_vertex_array_object'];
+          }
+
+          if (prop === 'getShaderPrecisionFormat') {
+            return () => ({ precision: 23, rangeMin: 127, rangeMax: 127 });
+          }
+
           if (prop === 'getExtension') {
             return (name: string) => {
               if (name === 'WEBGL_lose_context') {
@@ -48,12 +67,12 @@ export async function injectWebGLMock(page: Page): Promise<void> {
 
           if (prop === 'getParameter') {
             return (param: number) => {
-              if (param === 3379) return 4096; // MAX_TEXTURE_SIZE
-              if (param === 34076) return 4096; // MAX_CUBE_MAP_TEXTURE_SIZE
-              if (param === 34921) return 16; // MAX_VERTEX_ATTRIBS
-              if (param === 35661) return 32; // MAX_COMBINED_TEXTURE_IMAGE_UNITS
+              if (param === 3379 || param === 34076 || param === 34024) return 4096;
+              if (param === 34921 || param === 35660 || param === 35661) return 16;
+              if (param === 36347 || param === 36349 || param === 36348) return 1024;
               if (param === 7938) return 'WebGL 1.0 (Mock Context)';
               if (param === 35724) return 'WebGL GLSL ES 1.0 (Mock GLSL)';
+              if (param === 7936 || param === 7937) return 'WebKit';
               return 1;
             };
           }
@@ -75,7 +94,9 @@ export async function injectWebGLMock(page: Page): Promise<void> {
             prop === 'createProgram' ||
             prop === 'createBuffer' ||
             prop === 'createTexture' ||
-            prop === 'createFramebuffer'
+            prop === 'createFramebuffer' ||
+            prop === 'createRenderbuffer' ||
+            prop === 'createVertexArray'
           ) {
             return () => ({ id: Math.random() });
           }
