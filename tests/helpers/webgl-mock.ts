@@ -86,21 +86,16 @@ export async function injectWebGLMock(page: Page): Promise<void> {
             };
           }
 
-          if (prop === 'getShaderParameter' || prop === 'getProgramParameter') {
-            return () => true;
+          if (prop === 'getShaderParameter') return () => true;
+          if (prop === 'getProgramParameter') {
+            return (_p: unknown, param: number) => (param === 35718 || param === 35721 ? 0 : true);
           }
+          if (prop === 'getActiveUniform') return () => ({ name: 'u_mock', size: 1, type: 5126 });
+          if (prop === 'getActiveAttrib') return () => ({ name: 'a_mock', size: 1, type: 5126 });
 
-          if (prop === 'getShaderInfoLog' || prop === 'getProgramInfoLog') {
-            return () => '';
-          }
-
-          if (prop === 'getAttribLocation') {
-            return () => 0;
-          }
-
-          if (prop === 'getUniformLocation') {
-            return (_prog: unknown, name: string) => ({ name });
-          }
+          if (prop === 'getShaderInfoLog' || prop === 'getProgramInfoLog') return () => '';
+          if (prop === 'getAttribLocation') return () => 0;
+          if (prop === 'getUniformLocation') return (_p: unknown, name: string) => ({ name });
 
           if (
             prop === 'createShader' ||
@@ -113,6 +108,8 @@ export async function injectWebGLMock(page: Page): Promise<void> {
           ) {
             return () => ({ id: Math.random() });
           }
+
+          if (typeof prop === 'string' && /^[A-Z0-9_]+$/.test(prop)) return 0;
 
           return () => {};
         },

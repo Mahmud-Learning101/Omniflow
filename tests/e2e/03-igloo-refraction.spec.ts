@@ -17,9 +17,10 @@ test.describe('Section 2: Igloo Procedural Refraction Chamber & Shaders', () => 
     });
 
     page.on('pageerror', (err) => {
-      console.log('PAGE ERROR:', err.message);
+      console.log('PAGE ERROR STACK:', err.stack || err.message);
       uncaughtExceptions.push(err.message);
     });
+
 
     await injectWebGLMock(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
