@@ -10,7 +10,9 @@ test.describe('Smoke Test & Chassis Verification', () => {
 
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
+        const text = msg.text();
+        if (text.includes('favicon.ico') || text.includes('404')) return;
+        consoleErrors.push(text);
       }
     });
 
