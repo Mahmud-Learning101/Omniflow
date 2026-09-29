@@ -5,32 +5,26 @@ let isAudioMuted = siteConfig.audio.muted;
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  const AudioCtx =
-    window.AudioContext ||
-    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   if (!AudioCtx) return null;
-
   if (!audioCtx) {
-    try {
-      audioCtx = new AudioCtx();
-    } catch {
-      return null;
-    }
+    try { audioCtx = new AudioCtx(); } catch { return null; }
   }
-
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume().catch(() => {});
-  }
+  if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
   return audioCtx;
+}
+
+const muteListeners = new Set<() => void>();
+export function subscribeMute(listener: () => void): () => void {
+  muteListeners.add(listener);
+  return () => { muteListeners.delete(listener); };
 }
 
 export function setMuted(muted: boolean): void {
   isAudioMuted = muted;
+  muteListeners.forEach((fn) => fn());
 }
-
-export function isMuted(): boolean {
-  return isAudioMuted;
-}
+export function isMuted(): boolean { return isAudioMuted; }
 
 /** Micro-Tick: 1200Hz high-frequency decay on cybernetic/beacon hover. */
 export function playMicroTick(): void {
@@ -136,4 +130,5 @@ export const soundEngine = {
   playWarpHum,
   setMuted,
   isMuted,
+  subscribe: subscribeMute,
 };

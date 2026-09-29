@@ -6,12 +6,32 @@ const uri = process.env.MONGODB_URI;
 const isCI = Boolean(process.env.CI);
 const DB_NAME = "omniflow";
 
+export interface AdminOverrides {
+  brandColor?: string;
+  shaderIor?: number;
+  shaderRoughness?: number;
+  tickerSpeed?: number;
+  headline?: string;
+  updatedAt?: string;
+}
+
+const defaultOverrides: AdminOverrides = {
+  brandColor: "#d2ff00",
+  shaderIor: 1.45,
+  shaderRoughness: 0.12,
+  tickerSpeed: 2500,
+  headline: "AUTONOMOUS WORKFLOW KERNEL",
+  updatedAt: "2026-09-29T20:00:00.000Z",
+};
+
 interface InMemoryStore {
   telemetry: TelemetryPulse[];
+  overrides: AdminOverrides;
 }
 
 const memoryStore: InMemoryStore = {
   telemetry: [...initialTelemetryPulses],
+  overrides: { ...defaultOverrides },
 };
 
 let isFallbackMode = isCI || !uri;
@@ -71,8 +91,20 @@ export const mockStore = {
     if (memoryStore.telemetry.length > 50) memoryStore.telemetry.pop();
     return pulse;
   },
+  getOverrides(): AdminOverrides {
+    return { ...memoryStore.overrides };
+  },
+  setOverrides(next: Partial<AdminOverrides>): AdminOverrides {
+    memoryStore.overrides = {
+      ...memoryStore.overrides,
+      ...next,
+      updatedAt: new Date().toISOString(),
+    };
+    return { ...memoryStore.overrides };
+  },
   reset(): void {
     memoryStore.telemetry = [...initialTelemetryPulses];
+    memoryStore.overrides = { ...defaultOverrides };
   },
 };
 

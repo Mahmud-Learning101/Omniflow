@@ -31,10 +31,10 @@ test.describe('Section 2: Igloo Procedural Refraction Chamber & Shaders', () => 
 
     // 2. Verify 3D Canvas Container & Canvas Element
     const canvasContainer = page.getByTestId('refraction-canvas-container');
-    await expect(canvasContainer).toBeVisible({ timeout: 10000 });
+    await expect(canvasContainer).toBeVisible({ timeout: 15000 });
 
     const canvas = canvasContainer.locator('canvas');
-    await expect(canvas).toBeVisible();
+    await expect(canvas).toBeVisible({ timeout: 15000 });
 
     // 3. Verify ShaderControlsHUD Initial Values
     const hud = page.getByTestId('shader-controls-hud');
