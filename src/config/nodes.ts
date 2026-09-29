@@ -96,4 +96,16 @@ export const hubsConfig: HubsNetwork = HubsNetworkSchema.parse({
       meshConnections: ['hub-sin-01', 'hub-fra-01', 'hub-tyo-01', 'hub-sfo-01'],
     },
   ],
+  section: {
+    badge: '03 // Messenger Mesh',
+    title: 'Planetary',
+    titleHighlight: 'Agent Mesh',
+    subtitle: 'Decentralized autonomous orchestration grid with 60Hz state synchronization across 5 global telemetry cores.',
+    activeCoresLabel: 'Active Cores',
+    throughputLabel: 'Throughput',
+    agentsLabel: 'Agents',
+    syncClockLabel: 'Sync Clock',
+    hubsUnit: 'Hubs',
+    awaitingSignal: 'Awaiting mesh activation signal...',
+  },
 });

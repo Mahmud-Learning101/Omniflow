@@ -106,4 +106,11 @@ export const telemetryConfig: TelemetryConfig = TelemetryConfigSchema.parse({
       latencyMs: 8.3,
     },
   ],
+  operationsDeck: {
+    badge: '04 // Operations Deck',
+    title: 'Consensus & Telemetry',
+    titleHighlight: 'Pulse',
+    subtitle: 'Real-time hardware verification gauges, zero-drift pipeline efficiency metrics, and live Atlas sync.',
+    adminButtonText: 'Admin Console',
+  },
 });

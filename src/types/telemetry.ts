@@ -42,11 +42,20 @@ export const EventStreamEntrySchema = z.object({
   latencyMs: z.number().nonnegative(),
 });
 
+export const OperationsDeckSchema = z.object({
+  badge: z.string().min(1),
+  title: z.string().min(1),
+  titleHighlight: z.string().min(1),
+  subtitle: z.string().min(1),
+  adminButtonText: z.string().min(1),
+});
+
 export const TelemetryConfigSchema = z.object({
   refreshIntervalMs: z.number().positive(),
   kpiPulses: z.array(KpiPulseSchema).min(1),
   efficiencyGains: z.array(EfficiencyGainSchema).min(1),
   initialEvents: z.array(EventStreamEntrySchema).min(1),
+  operationsDeck: OperationsDeckSchema,
 });
 
 export type MetricSeverity = z.infer<typeof MetricSeveritySchema>;
@@ -54,4 +63,5 @@ export type KpiPulse = z.infer<typeof KpiPulseSchema>;
 export type EfficiencyGain = z.infer<typeof EfficiencyGainSchema>;
 export type EventCategory = z.infer<typeof EventCategorySchema>;
 export type EventStreamEntry = z.infer<typeof EventStreamEntrySchema>;
+export type OperationsDeckConfig = z.infer<typeof OperationsDeckSchema>;
 export type TelemetryConfig = z.infer<typeof TelemetryConfigSchema>;

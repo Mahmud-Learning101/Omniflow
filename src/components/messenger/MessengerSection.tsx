@@ -32,6 +32,7 @@ export function MessengerSection() {
 
   const totalAgents = hubsConfig.hubs.reduce((sum, h) => sum + h.activeAgents, 0);
   const totalThroughput = hubsConfig.hubs.reduce((sum, h) => sum + h.throughputGbps, 0);
+  const { section } = hubsConfig;
 
   return (
     <section
@@ -44,41 +45,41 @@ export function MessengerSection() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-obsidian-border bg-obsidian-card backdrop-blur-md">
           <Globe className="w-3.5 h-3.5 text-racing-lime" />
           <span className="text-xs font-mono tracking-widest uppercase text-racing-lime">
-            03 // Messenger Mesh
+            {section.badge}
           </span>
         </div>
 
         <h2 className="text-4xl md:text-6xl font-bold tracking-tight font-sans">
-          Planetary <span className="text-racing-lime">Agent Mesh</span>
+          {section.title} <span className="text-racing-lime">{section.titleHighlight}</span>
         </h2>
 
         <p className="text-base md:text-lg text-neutral-400 max-w-2xl mx-auto font-sans">
-          Decentralized autonomous orchestration grid with 60Hz state synchronization across 5 global telemetry cores.
+          {section.subtitle}
         </p>
 
         {/* Global Network Overview Ribbon */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto pt-4 text-left font-mono">
           <div className="p-3 rounded-lg border border-obsidian-border bg-obsidian-card/60">
             <span className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <Shield className="w-3.5 h-3.5 text-racing-lime" /> Active Cores
+              <Shield className="w-3.5 h-3.5 text-racing-lime" /> {section.activeCoresLabel}
             </span>
-            <span className="text-lg font-bold text-white">{hubsConfig.hubs.length} Hubs</span>
+            <span className="text-lg font-bold text-white">{hubsConfig.hubs.length} {section.hubsUnit}</span>
           </div>
           <div className="p-3 rounded-lg border border-obsidian-border bg-obsidian-card/60">
             <span className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <Zap className="w-3.5 h-3.5 text-racing-lime" /> Throughput
+              <Zap className="w-3.5 h-3.5 text-racing-lime" /> {section.throughputLabel}
             </span>
             <span className="text-lg font-bold text-racing-lime">{totalThroughput.toFixed(1)} Gbps</span>
           </div>
           <div className="p-3 rounded-lg border border-obsidian-border bg-obsidian-card/60">
             <span className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <Activity className="w-3.5 h-3.5 text-racing-lime" /> Agents
+              <Activity className="w-3.5 h-3.5 text-racing-lime" /> {section.agentsLabel}
             </span>
             <span className="text-lg font-bold text-white">{totalAgents.toLocaleString()}</span>
           </div>
           <div className="p-3 rounded-lg border border-obsidian-border bg-obsidian-card/60">
             <span className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <Globe className="w-3.5 h-3.5 text-racing-lime" /> Sync Clock
+              <Globe className="w-3.5 h-3.5 text-racing-lime" /> {section.syncClockLabel}
             </span>
             <span className="text-lg font-bold text-white">{hubsConfig.syncFrequencyHz} Hz</span>
           </div>
@@ -91,7 +92,7 @@ export function MessengerSection() {
           <SphericalScene onSelectHub={setSelectedHub} />
         ) : (
           <div className="w-full h-[520px] md:h-[600px] flex items-center justify-center text-neutral-500 font-mono text-xs">
-            Awaiting mesh activation signal...
+            {section.awaitingSignal}
           </div>
         )}
       </div>

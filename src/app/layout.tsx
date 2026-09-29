@@ -6,6 +6,7 @@ import {
   MagneticCursor,
   CRTOverlay,
   SoundController,
+  SmoothScroll,
 } from "@/components/common";
 
 const sansFont = Inter({
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${sansFont.variable} ${monoFont.variable}`}>
       <body className="bg-obsidian text-neutral-100 antialiased min-h-screen selection:bg-racing-lime selection:text-obsidian">
+        <SmoothScroll />
         <NavigationDock />
         <MagneticCursor />
         <CRTOverlay />

@@ -23,14 +23,29 @@ export const OperationalHubSchema = z.object({
   meshConnections: z.array(z.string()).min(1),
 });
 
+export const MessengerSectionSchema = z.object({
+  badge: z.string().min(1),
+  title: z.string().min(1),
+  titleHighlight: z.string().min(1),
+  subtitle: z.string().min(1),
+  activeCoresLabel: z.string().min(1),
+  throughputLabel: z.string().min(1),
+  agentsLabel: z.string().min(1),
+  syncClockLabel: z.string().min(1),
+  hubsUnit: z.string().min(1),
+  awaitingSignal: z.string().min(1),
+});
+
 export const HubsNetworkSchema = z.object({
   networkName: z.string().min(1),
   topology: z.enum(['full-mesh', 'ring', 'star', 'hybrid']),
   syncFrequencyHz: z.number().positive(),
   hubs: z.array(OperationalHubSchema).length(5),
+  section: MessengerSectionSchema,
 });
 
 export type NodeStatus = z.infer<typeof NodeStatusSchema>;
 export type GeoCoordinates = z.infer<typeof GeoCoordinatesSchema>;
 export type OperationalHub = z.infer<typeof OperationalHubSchema>;
+export type MessengerSectionConfig = z.infer<typeof MessengerSectionSchema>;
 export type HubsNetwork = z.infer<typeof HubsNetworkSchema>;

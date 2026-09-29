@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { Sliders, Activity, Terminal } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Sliders, Activity } from "lucide-react";
+import { telemetryConfig } from "@/config/telemetry";
 import { LiveTicker } from "./LiveTicker";
 import { MetricsHUD } from "./MetricsHUD";
 import { AdminOverrideDesk } from "./AdminOverrideDesk";
@@ -14,10 +15,26 @@ export function OperationsDeck() {
   const [shaderRoughness, setShaderRoughness] = useState(0.12);
   const [tickerSpeed, setTickerSpeed] = useState(2500);
 
+  const { operationsDeck } = telemetryConfig;
+
   const toggleAdmin = () => {
     playRelaySnap();
     setIsAdminOpen((prev) => !prev);
   };
+
+  // Listen for global launch console events dispatched from NavigationDock
+  useEffect(() => {
+    const handleLaunch = () => {
+      setIsAdminOpen(true);
+      const section = document.getElementById("telemetry");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+
+    window.addEventListener("omniflow:launch-console", handleLaunch);
+    return () => window.removeEventListener("omniflow:launch-console", handleLaunch);
+  }, []);
 
   return (
     <section
@@ -32,14 +49,14 @@ export function OperationsDeck() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-obsidian-border bg-obsidian-card backdrop-blur-md">
               <Activity className="w-3.5 h-3.5 text-racing-lime" />
               <span className="text-[11px] font-mono tracking-widest uppercase text-racing-lime">
-                04 // Operations Deck
+                {operationsDeck.badge}
               </span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-bold tracking-tight font-sans">
-              Consensus & Telemetry <span style={{ color: brandColor }}>Pulse</span>
+              {operationsDeck.title} <span style={{ color: brandColor }}>{operationsDeck.titleHighlight}</span>
             </h2>
             <p className="text-sm sm:text-base text-neutral-400 max-w-2xl font-sans">
-              Real-time hardware verification gauges, zero-drift pipeline efficiency metrics, and live Atlas sync.
+              {operationsDeck.subtitle}
             </p>
           </div>
 
@@ -49,7 +66,7 @@ export function OperationsDeck() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-obsidian-border bg-obsidian-card/80 hover:border-racing-lime text-xs font-mono tracking-wider uppercase transition-all backdrop-blur-md hover:text-racing-lime"
           >
             <Sliders className="w-4 h-4 text-racing-lime" />
-            <span>Admin Console</span>
+            <span>{operationsDeck.adminButtonText}</span>
           </button>
         </div>
 

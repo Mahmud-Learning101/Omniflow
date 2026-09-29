@@ -44,6 +44,23 @@ export function SphericalScene({ onSelectHub }: SphericalSceneProps) {
     dirLight.position.set(5, 8, 5);
     scene.add(dirLight);
 
+    // Deep cosmic orbital dust field
+    const particlesGeo = new THREE.BufferGeometry();
+    const particleCount = 180;
+    const posArray = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i++) {
+      posArray[i] = (Math.random() - 0.5) * 16;
+    }
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const particlesMat = new THREE.PointsMaterial({
+      size: 0.04,
+      color: 0xd2ff00,
+      transparent: true,
+      opacity: 0.35,
+    });
+    const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
+    scene.add(particlesMesh);
+
     let isDragging = false;
     let prevX = 0;
     let prevY = 0;
@@ -92,6 +109,7 @@ export function SphericalScene({ onSelectHub }: SphericalSceneProps) {
     let animId: number;
     const render = () => {
       if (autoRotate) group.rotation.y += 0.002;
+      particlesMesh.rotation.y += 0.0003;
       renderer.render(scene, camera);
       animId = requestAnimationFrame(render);
     };
@@ -104,6 +122,8 @@ export function SphericalScene({ onSelectHub }: SphericalSceneProps) {
       window.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('click', onClick);
       renderer.dispose();
+      particlesGeo.dispose();
+      particlesMat.dispose();
       setPlanetaryGroup(null);
     };
   }, [onSelectHub]);

@@ -4,3 +4,4 @@ export * from "./CRTOverlay";
 export * from "./SoundController";
 export * from "./LatencyIndicator";
 export * from "./SoundToggle";
+export * from "./SmoothScroll";
