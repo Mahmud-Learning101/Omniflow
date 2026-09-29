@@ -13,6 +13,17 @@ export async function injectWebGLMock(page: Page): Promise<void> {
         canvas,
         drawingBufferWidth: canvas.width || 800,
         drawingBufferHeight: canvas.height || 600,
+        VERSION: 7938,
+        SHADING_LANGUAGE_VERSION: 35724,
+        VENDOR: 7936,
+        RENDERER: 7937,
+        MAX_TEXTURE_SIZE: 3379,
+        MAX_CUBE_MAP_TEXTURE_SIZE: 34076,
+        MAX_RENDERBUFFER_SIZE: 34024,
+        MAX_VERTEX_ATTRIBS: 34921,
+        MAX_COMBINED_TEXTURE_IMAGE_UNITS: 35661,
+        MAX_TEXTURE_IMAGE_UNITS: 34930,
+        MAX_VERTEX_TEXTURE_IMAGE_UNITS: 35660,
         VERTEX_SHADER: 35633,
         FRAGMENT_SHADER: 35632,
         COMPILE_STATUS: 35713,
@@ -33,9 +44,7 @@ export async function injectWebGLMock(page: Page): Promise<void> {
 
       const handler: ProxyHandler<Record<string, unknown>> = {
         get(target: Record<string, unknown>, prop: string | symbol) {
-          if (typeof prop === 'string' && prop in target) {
-            return target[prop];
-          }
+          if (typeof prop === 'string' && prop in target) return target[prop];
 
           if (prop === 'getContextAttributes') {
             return () => ({
@@ -66,13 +75,13 @@ export async function injectWebGLMock(page: Page): Promise<void> {
           }
 
           if (prop === 'getParameter') {
-            return (param: number) => {
-              if (param === 3379 || param === 34076 || param === 34024) return 4096;
-              if (param === 34921 || param === 35660 || param === 35661) return 16;
-              if (param === 36347 || param === 36349 || param === 36348) return 1024;
-              if (param === 7938) return 'WebGL 1.0 (Mock Context)';
-              if (param === 35724) return 'WebGL GLSL ES 1.0 (Mock GLSL)';
+            return (param: number | unknown) => {
+              if (param === 7938 || typeof param === 'function' || !param) return 'WebGL 2.0 (Mock Context)';
+              if (param === 35724) return 'WebGL GLSL ES 3.00 (Mock GLSL)';
               if (param === 7936 || param === 7937) return 'WebKit';
+              if (param === 3379 || param === 34076 || param === 34024) return 4096;
+              if (param === 34921 || param === 35660 || param === 35661 || param === 34930) return 16;
+              if (param === 36347 || param === 36349 || param === 36348) return 1024;
               return 1;
             };
           }
@@ -85,7 +94,11 @@ export async function injectWebGLMock(page: Page): Promise<void> {
             return () => '';
           }
 
-          if (prop === 'getUniformLocation' || prop === 'getAttribLocation') {
+          if (prop === 'getAttribLocation') {
+            return () => 0;
+          }
+
+          if (prop === 'getUniformLocation') {
             return (_prog: unknown, name: string) => ({ name });
           }
 
