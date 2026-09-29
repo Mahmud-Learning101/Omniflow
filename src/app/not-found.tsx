@@ -2,19 +2,17 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-obsidian text-neutral-100 p-8 text-center font-mono">
-      <h2 className="text-4xl font-bold text-racing-lime mb-4">
-        404 // NODE NOT FOUND
-      </h2>
-      <p className="text-neutral-400 mb-8 max-w-md">
-        The requested operational route or state mesh vector does not exist.
+    <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-obsidian text-neutral-100 font-mono text-center space-y-4">
+      <h2 className="text-2xl font-bold text-racing-lime">404 // NODE NOT FOUND</h2>
+      <p className="text-xs text-neutral-500 max-w-md">
+        The requested routing vector or telemetry coordinate does not exist in the active planetary state mesh.
       </p>
       <Link
         href="/"
-        className="px-6 py-2.5 rounded bg-racing-lime text-obsidian font-bold text-xs uppercase tracking-wider"
+        className="px-4 py-2 rounded-lg border border-obsidian-border bg-obsidian-card text-xs uppercase hover:border-racing-lime hover:text-racing-lime transition-all"
       >
-        Return to Mesh
+        Return to Kernel
       </Link>
-    </div>
+    </main>
   );
 }

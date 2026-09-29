@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { soundEngine } from "@/lib/sound";
 
 export interface UseAudioReturn {
@@ -18,17 +18,18 @@ export interface UseAudioReturn {
  * Hook providing access to OmniFlow's 100% procedural Web Audio API engine.
  */
 export function useAudio(): UseAudioReturn {
-  const [isMuted, setIsMutedState] = useState<boolean>(() => soundEngine.isMuted());
+  const isMuted = useSyncExternalStore(
+    soundEngine.subscribe,
+    soundEngine.isMuted,
+    () => false
+  );
 
   const setMuted = useCallback((muted: boolean) => {
     soundEngine.setMuted(muted);
-    setIsMutedState(muted);
   }, []);
 
   const toggleMute = useCallback(() => {
-    const nextState = !soundEngine.isMuted();
-    soundEngine.setMuted(nextState);
-    setIsMutedState(nextState);
+    soundEngine.setMuted(!soundEngine.isMuted());
   }, []);
 
   const playTick = useCallback(() => {

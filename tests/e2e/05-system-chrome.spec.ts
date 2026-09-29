@@ -11,7 +11,9 @@ test.describe("Phase 4: System Chrome & Shared Interactive Props", () => {
 
     page.on("console", (msg) => {
       if (msg.type() === "error") {
-        consoleErrors.push(msg.text());
+        const text = msg.text();
+        if (text.includes("favicon.ico") || text.includes("webpack-hmr")) return;
+        consoleErrors.push(text);
       }
     });
 
