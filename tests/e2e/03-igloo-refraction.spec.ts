@@ -10,21 +10,17 @@ test.describe('Section 2: Igloo Procedural Refraction Chamber & Shaders', () => 
     const uncaughtExceptions: string[] = [];
 
     page.on('console', (msg) => {
-      console.log('BROWSER LOG:', msg.type(), msg.text());
       if (msg.type() === 'error') {
         consoleErrors.push(msg.text());
       }
     });
 
     page.on('pageerror', (err) => {
-      console.log('PAGE ERROR STACK:', err.stack || err.message);
       uncaughtExceptions.push(err.message);
     });
 
-
     await injectWebGLMock(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-
 
     // 1. Verify Section 2 DOM Mounting
     const section = page.getByTestId('igloo-refraction-section');
