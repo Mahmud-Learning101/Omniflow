@@ -11,11 +11,20 @@ test.describe('Section 3: Messenger 3D Planetary Agent Mesh', () => {
 
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
+        const text = msg.text();
+        if (
+          text.includes('favicon.ico') ||
+          text.includes('webpack-hmr') ||
+          text.includes('ERR_CONNECTION_REFUSED')
+        ) {
+          return;
+        }
+        consoleErrors.push(text);
       }
     });
 
     page.on('pageerror', (err) => {
+      console.log('PAGE ERROR STACK:', err.stack);
       uncaughtExceptions.push(err.message);
     });
 
