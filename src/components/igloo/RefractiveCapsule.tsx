@@ -76,10 +76,23 @@ export function RefractiveCapsule({ preset }: RefractiveCapsuleProps) {
 
   return (
     <group data-testid="refractive-capsule-group">
+      {/* Inner luminous state core */}
+      <mesh rotation={[Math.PI / 4, 0, Math.PI / 4]} scale={0.45}>
+        <octahedronGeometry args={[1.2, 0]} />
+        <meshStandardMaterial
+          color="#00f0ff"
+          emissive="#00f0ff"
+          emissiveIntensity={2.5}
+          wireframe
+        />
+      </mesh>
+      <pointLight color="#d2ff00" intensity={3.5} distance={6} decay={2} />
+      <pointLight color="#00f0ff" intensity={4.0} distance={5} decay={2} />
+
       {/* Outer ambient glow wireframe cage */}
       <mesh rotation={[0, Math.PI / 4, 0]} scale={1.04}>
         <cylinderGeometry args={[1.32, 1.32, 3.42, 8, 1]} />
-        <meshBasicMaterial color="#d2ff00" wireframe transparent opacity={0.08} />
+        <meshBasicMaterial color="#d2ff00" wireframe transparent opacity={0.15} />
       </mesh>
 
       {/* Procedural dual-bevel monolith */}

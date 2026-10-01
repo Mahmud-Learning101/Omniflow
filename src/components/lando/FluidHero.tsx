@@ -2,10 +2,16 @@
 
 import React from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { siteConfig } from "@/config/site";
 import { KineticHeading } from "./KineticHeading";
 import { VelocityParticles } from "./VelocityParticles";
 import { HeroTelemetryBar } from "./HeroTelemetryBar";
+
+const DynamicHeroVisual = dynamic(
+  () => import("./HeroVisual").then((mod) => mod.HeroVisual),
+  { ssr: false }
+);
 
 interface FluidHeroProps {
   className?: string;
@@ -28,6 +34,9 @@ export function FluidHero({ className = "" }: FluidHeroProps) {
         data-testid="fluid-hero-glow"
         className="absolute inset-0 bg-[radial-gradient(ellipse_75%_65%_at_50%_-10%,rgba(210,255,0,0.12),rgba(8,9,13,0))] pointer-events-none"
       />
+
+      {/* 3D Quantum Tensor Ring Centerpiece */}
+      <DynamicHeroVisual />
 
       {/* 2D Spring Particle Ribbon Canvas */}
       <VelocityParticles />

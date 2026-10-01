@@ -32,11 +32,11 @@ export function createProceduralPlanet(radius = 2.5): THREE.Group {
 
   geometry.computeVertexNormals();
 
-  // Dark obsidian faceted terrain
+  // Tactical dark cybernetic faceted terrain
   const planetMaterial = new THREE.MeshStandardMaterial({
-    color: 0x0c0e14,
-    roughness: 0.85,
-    metalness: 0.25,
+    color: 0x162032,
+    roughness: 0.45,
+    metalness: 0.6,
     flatShading: true,
   });
 
@@ -47,24 +47,36 @@ export function createProceduralPlanet(radius = 2.5): THREE.Group {
   planetGroup.add(planetMesh);
 
   // Racing Lime tactical mesh wireframe
-  const wireGeometry = new THREE.IcosahedronGeometry(radius * 1.002, 2);
+  const wireGeometry = new THREE.IcosahedronGeometry(radius * 1.004, 2);
   const wireMaterial = new THREE.MeshBasicMaterial({
     color: 0xd2ff00,
     wireframe: true,
     transparent: true,
-    opacity: 0.08,
+    opacity: 0.22,
   });
   const wireMesh = new THREE.Mesh(wireGeometry, wireMaterial);
   wireMesh.name = 'PlanetWireframe';
   planetGroup.add(wireMesh);
 
-  // Subtle atmosphere glow shell
-  const atmoGeometry = new THREE.SphereGeometry(radius * 1.05, 24, 24);
-  const atmoMaterial = new THREE.MeshBasicMaterial({
-    color: 0xd2ff00,
+  // Glowing cyan equator telemetry ring
+  const ringGeo = new THREE.TorusGeometry(radius * 1.12, 0.015, 8, 64);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0x00f0ff,
     transparent: true,
-    opacity: 0.03,
+    opacity: 0.45,
+  });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.rotation.x = Math.PI / 2;
+  planetGroup.add(ringMesh);
+
+  // Luminous atmosphere glow shell
+  const atmoGeometry = new THREE.SphereGeometry(radius * 1.08, 32, 32);
+  const atmoMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00f0ff,
+    transparent: true,
+    opacity: 0.12,
     side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
   });
   const atmoMesh = new THREE.Mesh(atmoGeometry, atmoMaterial);
   atmoMesh.name = 'PlanetAtmosphere';

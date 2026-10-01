@@ -27,23 +27,27 @@ varying vec3 vNormal;
 varying vec3 vEyeVector;
 varying vec2 vUv;
 
-// Procedural high-contrast studio environment map
+// Procedural high-contrast studio environment map with rich prismatic reflections
 vec3 getEnvironmentColor(vec3 ray) {
   float y = ray.y * 0.5 + 0.5;
-  vec3 topColor = vec3(0.02, 0.03, 0.06);
-  vec3 midColor = vec3(0.05, 0.08, 0.12);
-  vec3 bottomColor = vec3(0.01, 0.01, 0.02);
+  vec3 topColor = vec3(0.05, 0.12, 0.22);
+  vec3 midColor = vec3(0.12, 0.20, 0.18);
+  vec3 bottomColor = vec3(0.02, 0.04, 0.08);
 
   vec3 env = mix(bottomColor, midColor, smoothstep(0.0, 0.5, y));
   env = mix(env, topColor, smoothstep(0.5, 1.0, y));
 
-  // Neon horizon flare
-  float horizon = pow(1.0 - abs(ray.y), 16.0);
-  env += vec3(0.824, 1.0, 0.0) * horizon * 0.35;
+  // Neon Racing Lime horizon flare
+  float horizon = pow(1.0 - abs(ray.y), 8.0);
+  env += vec3(0.824, 1.0, 0.0) * horizon * 0.85;
+
+  // Prismatic dispersion highlights
+  float flare = pow(max(dot(ray, normalize(vec3(1.0, 1.0, 1.0))), 0.0), 16.0);
+  env += vec3(0.0, 0.94, 1.0) * flare * 1.2;
 
   // Grid caustics simulation
-  float grid = sin(ray.x * 14.0 + uTime * 0.2) * cos(ray.z * 14.0 + uTime * 0.2);
-  env += vec3(0.0, 0.7, 1.0) * max(0.0, grid) * 0.15;
+  float grid = sin(ray.x * 12.0 + uTime * 0.3) * cos(ray.z * 12.0 + uTime * 0.3);
+  env += vec3(0.2, 0.8, 1.0) * max(0.0, grid) * 0.45;
 
   return env;
 }
