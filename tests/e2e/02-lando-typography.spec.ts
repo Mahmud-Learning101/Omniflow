@@ -4,6 +4,7 @@ import { injectWebGLMock } from "../helpers/webgl-mock";
 test.describe("Lando Fluid Canvas & Kinetic Typography", () => {
   test.beforeEach(async ({ page }) => {
     await injectWebGLMock(page);
+    await page.setViewportSize({ width: 1280, height: 720 });
   });
 
   test("scales typography fluidly across responsive breakpoints", async ({
@@ -90,7 +91,7 @@ test.describe("Lando Fluid Canvas & Kinetic Typography", () => {
     // Validate Kinetic Heading content
     const heading = page.locator('[data-testid="kinetic-heading-text"]');
     await expect(heading).toBeVisible();
-    await expect(heading).toContainText("AUTONOMOUS WORKFLOW KERNEL", {
+    await expect(heading).toContainText("Autonomous Agent Fleet Control", {
       ignoreCase: true,
     });
 

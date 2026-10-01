@@ -22,15 +22,14 @@ export function KineticHeading({
   const { vx, normalizedVelocity } = usePointerVelocity();
 
   // Dynamic kinetic distortion parameters (squish on Y, stretch on X, skew on velocity direction)
+  // Uses GPU-accelerated transforms exclusively to guarantee zero layout shifts (CLS = 0)
   const transformStyle = useMemo(() => {
     const scaleX = 1 + normalizedVelocity * 0.16;
     const scaleY = Math.max(0.86, 1 - normalizedVelocity * 0.08);
     const skew = Math.max(-5, Math.min(5, (vx / 1000) * 6));
-    const letterSpacing = `${-0.02 + normalizedVelocity * 0.02}em`;
 
     return {
       transform: `scaleX(${scaleX.toFixed(3)}) scaleY(${scaleY.toFixed(3)}) skewX(${skew.toFixed(2)}deg)`,
-      letterSpacing,
       transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
     };
   }, [vx, normalizedVelocity]);
@@ -45,7 +44,7 @@ export function KineticHeading({
       <h1
         data-testid="kinetic-heading-text"
         style={transformStyle}
-        className="font-sans text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black uppercase tracking-tight text-neutral-100 transition-transform duration-200"
+        className="font-sans text-3xl sm:text-5xl md:text-6xl lg:text-7xl 2xl:text-8xl font-black uppercase tracking-tight text-neutral-100 transition-transform duration-200"
       >
         {prefix && (
           <span
@@ -56,20 +55,30 @@ export function KineticHeading({
           </span>
         )}
         <span className="block">
-          {words.map((word, idx) => (
-            <React.Fragment key={`${word}-${idx}`}>
-              <span
-                className={
-                  idx === words.length - 1
-                    ? "text-racing-lime inline-block"
-                    : "inline-block mr-2 sm:mr-4"
-                }
-              >
-                {word}
-              </span>
-              {idx < words.length - 1 && " "}
-            </React.Fragment>
-          ))}
+          <span className="block">
+            {words.slice(0, Math.ceil(words.length / 2)).map((word, idx, arr) => (
+              <React.Fragment key={`${word}-${idx}`}>
+                <span className="inline-block mr-2 sm:mr-4">{word}</span>
+                {idx < arr.length - 1 && " "}
+              </React.Fragment>
+            ))}
+          </span>{" "}
+          <span className="block">
+            {words.slice(Math.ceil(words.length / 2)).map((word, idx, arr) => (
+              <React.Fragment key={`${word}-${idx}`}>
+                <span
+                  className={
+                    idx === arr.length - 1
+                      ? "text-racing-lime inline-block"
+                      : "inline-block mr-2 sm:mr-4"
+                  }
+                >
+                  {word}
+                </span>
+                {idx < arr.length - 1 && " "}
+              </React.Fragment>
+            ))}
+          </span>
         </span>
       </h1>
     </div>

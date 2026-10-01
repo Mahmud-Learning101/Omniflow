@@ -1,6 +1,8 @@
 import { MongoClient, type Db } from "mongodb";
 import { initialTelemetryPulses } from "@/config/site";
+import { telemetryConfig } from "@/config/telemetry";
 import type { TelemetryPulse } from "@/types/site";
+import type { AgentTraceEvent, FleetPolicyConstraints } from "@/types/telemetry";
 
 const uri = process.env.MONGODB_URI;
 const isCI = Boolean(process.env.CI);
@@ -20,18 +22,22 @@ const defaultOverrides: AdminOverrides = {
   shaderIor: 1.45,
   shaderRoughness: 0.12,
   tickerSpeed: 2500,
-  headline: "AUTONOMOUS WORKFLOW KERNEL",
-  updatedAt: "2026-09-29T20:00:00.000Z",
+  headline: "AUTONOMOUS AGENT FLEET CONTROL",
+  updatedAt: "2026-10-01T21:00:00.000Z",
 };
 
 interface InMemoryStore {
   telemetry: TelemetryPulse[];
   overrides: AdminOverrides;
+  policy: FleetPolicyConstraints;
+  traces: AgentTraceEvent[];
 }
 
 const memoryStore: InMemoryStore = {
   telemetry: [...initialTelemetryPulses],
   overrides: { ...defaultOverrides },
+  policy: { ...telemetryConfig.defaultPolicy },
+  traces: [...telemetryConfig.initialAgentTraces],
 };
 
 let isFallbackMode = isCI || !uri;
@@ -102,9 +108,30 @@ export const mockStore = {
     };
     return { ...memoryStore.overrides };
   },
+  getPolicy(): FleetPolicyConstraints {
+    return { ...memoryStore.policy };
+  },
+  setPolicy(next: Partial<FleetPolicyConstraints>): FleetPolicyConstraints {
+    memoryStore.policy = {
+      ...memoryStore.policy,
+      ...next,
+      updatedAt: new Date().toISOString(),
+    };
+    return { ...memoryStore.policy };
+  },
+  getTraces(limit = 20): AgentTraceEvent[] {
+    return memoryStore.traces.slice(0, limit);
+  },
+  insertTrace(trace: AgentTraceEvent): AgentTraceEvent {
+    memoryStore.traces.unshift(trace);
+    if (memoryStore.traces.length > 100) memoryStore.traces.pop();
+    return trace;
+  },
   reset(): void {
     memoryStore.telemetry = [...initialTelemetryPulses];
     memoryStore.overrides = { ...defaultOverrides };
+    memoryStore.policy = { ...telemetryConfig.defaultPolicy };
+    memoryStore.traces = [...telemetryConfig.initialAgentTraces];
   },
 };
 

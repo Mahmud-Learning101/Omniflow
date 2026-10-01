@@ -32,9 +32,9 @@ test.describe('Smoke Test & Chassis Verification', () => {
     const mainHeading = page.getByRole('heading', { level: 1 });
     await expect(mainHeading).toBeVisible();
     await expect(mainHeading).toContainText('OmniFlow');
-    await expect(mainHeading).toContainText(/Kernel/i);
+    await expect(mainHeading).toContainText(/Autonomous Agent Fleet Control/i);
 
-    const statusBadge = page.getByText(/System Online \/\/ Phase 1 Operational/i);
+    const statusBadge = page.getByText(/OTel & MCP Receiver Online/i);
     await expect(statusBadge).toBeVisible();
 
     // Assert zero console errors and zero unhandled page exceptions

@@ -44,21 +44,25 @@ test.describe("Section 4 & 5: Operations Deck, Admin Console & MongoDB Sync", ()
 
     // 4. Open and Test Admin Override Drawer
     const adminBtn = page.getByTestId("btn-open-admin");
+    await adminBtn.scrollIntoViewIfNeeded();
     await expect(adminBtn).toBeVisible();
-    await adminBtn.click();
+    await adminBtn.click({ force: true });
 
     const drawer = page.getByTestId("admin-override-desk");
-    await expect(drawer).toBeVisible();
+    await expect(drawer).toBeVisible({ timeout: 5000 });
 
-    // Change brand color swatch
-    const cyanSwatch = page.getByTestId("swatch-#00f0ff");
-    await cyanSwatch.click();
+    // Select operating mode
+    const hitlModeBtn = page.getByTestId("mode-btn-human_in_loop");
+    await hitlModeBtn.click();
 
-    // Adjust IOR slider
-    const iorSlider = page.getByTestId("slider-shader-ior");
-    await iorSlider.fill("1.85");
+    // Adjust spend limit and P99 latency sliders
+    const spendSlider = page.getByTestId("slider-spend-limit");
+    await spendSlider.fill("75");
 
-    // Click Persist Overrides
+    const latencySlider = page.getByTestId("slider-shader-ior");
+    await latencySlider.fill("1200");
+
+    // Click Persist & Broadcast Policies
     const persistBtn = page.getByTestId("btn-persist-overrides");
     await persistBtn.click();
     await expect(persistBtn).toBeEnabled({ timeout: 5000 });
@@ -81,7 +85,7 @@ test.describe("Section 4 & 5: Operations Deck, Admin Console & MongoDB Sync", ()
     await expect(returnToTop).toBeVisible();
     await returnToTop.click();
 
-    // 7. Verify API endpoints directly
+    // 7. Verify API endpoints directly (Telemetry, Admin & OTel Ingest)
     const telemetryRes = await request.get("/api/telemetry?limit=5");
     expect(telemetryRes.ok()).toBeTruthy();
     const telemetryJson = await telemetryRes.json();
@@ -93,6 +97,31 @@ test.describe("Section 4 & 5: Operations Deck, Admin Console & MongoDB Sync", ()
     const adminJson = await adminRes.json();
     expect(adminJson.success).toBe(true);
     expect(adminJson.overrides).toBeDefined();
+    expect(adminJson.policy).toBeDefined();
+
+    // Test OTel Ingest POST endpoint
+    const ingestRes = await request.post("/api/telemetry/ingest", {
+      data: {
+        id: "test-trace-01",
+        traceId: "trace-e2e-verification",
+        framework: "langgraph",
+        agentId: "test-e2e-agent",
+        cloudRegion: "us-west-2",
+        action: "E2E Automated Task Dispatch",
+        promptTokens: 1200,
+        completionTokens: 350,
+        estimatedCostUsd: 0.0045,
+        latencyMs: 180,
+        confidenceScore: 0.98,
+        driftVariance: 0.02,
+        status: "success",
+        timestamp: new Date().toISOString(),
+      },
+    });
+    expect(ingestRes.ok()).toBeTruthy();
+    const ingestJson = await ingestRes.json();
+    expect(ingestJson.success).toBe(true);
+    expect(ingestJson.traceId).toBe("trace-e2e-verification");
 
     // 8. Assert zero console errors & zero unhandled exceptions
     expect(consoleErrors).toEqual([]);

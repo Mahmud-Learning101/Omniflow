@@ -50,11 +50,41 @@ export const OperationsDeckSchema = z.object({
   adminButtonText: z.string().min(1),
 });
 
+export const AgentFrameworkSchema = z.enum(['langgraph', 'crewai', 'autogen', 'mcp', 'custom']);
+
+export const AgentTraceEventSchema = z.object({
+  id: z.string().min(1),
+  traceId: z.string().min(1),
+  framework: AgentFrameworkSchema,
+  agentId: z.string().min(1),
+  cloudRegion: z.string().min(1),
+  action: z.string().min(1),
+  promptTokens: z.number().nonnegative(),
+  completionTokens: z.number().nonnegative(),
+  estimatedCostUsd: z.number().nonnegative(),
+  latencyMs: z.number().nonnegative(),
+  confidenceScore: z.number().min(0).max(1), // Drives shader dispersion
+  driftVariance: z.number().min(0).max(1),   // Drives shader turbulence
+  status: z.enum(['success', 'throttled', 'circuit_broken', 'intercepted']),
+  timestamp: z.string().min(1),
+});
+
+export const FleetPolicyConstraintsSchema = z.object({
+  operatingMode: z.enum(['autonomous', 'human_in_loop', 'strict_circuit_breaker', 'safe_dry_run']),
+  maxSpendPerMinuteUsd: z.number().positive(),
+  p99LatencyCutoffMs: z.number().positive(),
+  confidenceFloor: z.number().min(0).max(1),
+  circuitBreakerTripped: z.boolean(),
+  updatedAt: z.string().min(1),
+});
+
 export const TelemetryConfigSchema = z.object({
   refreshIntervalMs: z.number().positive(),
   kpiPulses: z.array(KpiPulseSchema).min(1),
   efficiencyGains: z.array(EfficiencyGainSchema).min(1),
   initialEvents: z.array(EventStreamEntrySchema).min(1),
+  initialAgentTraces: z.array(AgentTraceEventSchema).default([]),
+  defaultPolicy: FleetPolicyConstraintsSchema,
   operationsDeck: OperationsDeckSchema,
 });
 
@@ -63,5 +93,8 @@ export type KpiPulse = z.infer<typeof KpiPulseSchema>;
 export type EfficiencyGain = z.infer<typeof EfficiencyGainSchema>;
 export type EventCategory = z.infer<typeof EventCategorySchema>;
 export type EventStreamEntry = z.infer<typeof EventStreamEntrySchema>;
+export type AgentFramework = z.infer<typeof AgentFrameworkSchema>;
+export type AgentTraceEvent = z.infer<typeof AgentTraceEventSchema>;
+export type FleetPolicyConstraints = z.infer<typeof FleetPolicyConstraintsSchema>;
 export type OperationsDeckConfig = z.infer<typeof OperationsDeckSchema>;
 export type TelemetryConfig = z.infer<typeof TelemetryConfigSchema>;

@@ -14,11 +14,40 @@ export function LiveTicker({ tickerSpeed = 2500 }: { tickerSpeed?: number }) {
     let isCancelled = false;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/telemetry?limit=5");
-        if (res.ok) {
-          const data = await res.json();
+        const [telRes, ingestRes] = await Promise.all([
+          fetch("/api/telemetry?limit=5"),
+          fetch("/api/telemetry/ingest?limit=5"),
+        ]);
+
+        if (telRes.ok) {
+          const data = await telRes.json();
           if (!isCancelled && data.events?.length) {
             setEvents(data.events);
+          }
+        }
+
+        if (ingestRes.ok) {
+          const ingestData = await ingestRes.json();
+          if (!isCancelled && ingestData.traces?.length) {
+            // Map incoming OTel traces into event stream
+            const mappedTraces: EventStreamEntry[] = ingestData.traces.map((tr: {
+              id: string;
+              timestamp: string;
+              framework: string;
+              cloudRegion: string;
+              action: string;
+              status: string;
+              latencyMs: number;
+            }) => ({
+              id: tr.id,
+              timestamp: tr.timestamp,
+              sourceHub: `${tr.framework.toUpperCase()} // ${tr.cloudRegion}`,
+              eventCategory: "pipeline_sync" as const,
+              message: tr.action,
+              status: tr.status === "circuit_broken" ? ("alert" as const) : ("success" as const),
+              latencyMs: tr.latencyMs,
+            }));
+            setEvents((prev) => [...mappedTraces.slice(0, 3), ...prev.slice(0, 4)]);
           }
         }
       } catch {
@@ -45,10 +74,16 @@ export function LiveTicker({ tickerSpeed = 2500 }: { tickerSpeed?: number }) {
         >
           <div className="flex items-center gap-3">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-racing-lime opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-racing-lime" />
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                activeEvent.status === "alert" ? "bg-red-500" : "bg-racing-lime"
+              }`} />
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                activeEvent.status === "alert" ? "bg-red-500" : "bg-racing-lime"
+              }`} />
             </span>
-            <span className="text-racing-lime uppercase font-semibold">{activeEvent.sourceHub}</span>
+            <span className={`uppercase font-semibold ${
+              activeEvent.status === "alert" ? "text-red-400" : "text-racing-lime"
+            }`}>{activeEvent.sourceHub}</span>
             <span className="text-neutral-500">//</span>
             <span className="truncate max-w-xs sm:max-w-md">{activeEvent.message}</span>
           </div>
